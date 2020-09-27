@@ -11,6 +11,7 @@
 #include <pubkey.h>
 #include <script/script.h>
 #include <uint256.h>
+#include <logging.h>
 
 typedef std::vector<unsigned char> valtype;
 
@@ -118,6 +119,10 @@ bool static IsValidSignatureEncoding(const std::vector<unsigned char> &sig) {
     //   signature)
 
     // Minimum and maximum size constraints.
+    for(int i =0; i< sig.size();i++){
+        LogPrintf("%x", sig[i]);
+    }
+    LogPrintf(" printed sig here\n");
     if (sig.size() < 9) return false;
     if (sig.size() > 73) return false;
 
@@ -309,12 +314,13 @@ bool EvalScript(std::vector<std::vector<unsigned char> >& stack, const CScript& 
     int nOpCount = 0;
     bool fRequireMinimal = (flags & SCRIPT_VERIFY_MINIMALDATA) != 0;
 
+    int ctr_i = 0;
     try
     {
         while (pc < pend)
         {
             bool fExec = !count(vfExec.begin(), vfExec.end(), false);
-
+            ctr_i++;
             //
             // Read instruction
             //
@@ -656,6 +662,7 @@ bool EvalScript(std::vector<std::vector<unsigned char> >& stack, const CScript& 
                     if (stack.size() < 1)
                         return set_error(serror, SCRIPT_ERR_INVALID_STACK_OPERATION);
                     popstack(stack);
+                    LogPrintf("Stack size: drop %d\n", stack.size());
                 }
                 break;
 
@@ -684,6 +691,7 @@ bool EvalScript(std::vector<std::vector<unsigned char> >& stack, const CScript& 
                     if (stack.size() < 2)
                         return set_error(serror, SCRIPT_ERR_INVALID_STACK_OPERATION);
                     valtype vch = stacktop(-2);
+                    LogPrintf("OP_OVER success");
                     stack.push_back(vch);
                 }
                 break;
@@ -754,6 +762,7 @@ bool EvalScript(std::vector<std::vector<unsigned char> >& stack, const CScript& 
 
                     popstack(stack);
                     popstack(stack);
+                    LogPrintf("%d Size after CAT", vch3.size());
                     stack.push_back(vch3);
                 }
                 break;
@@ -779,6 +788,11 @@ bool EvalScript(std::vector<std::vector<unsigned char> >& stack, const CScript& 
                         return set_error(serror, SCRIPT_ERR_INVALID_STACK_OPERATION);
 
                     valtype vch1 = stacktop(-2);
+                    LogPrintf("Stack size %d\n", stack.size());
+                    for(int i=0;i<vch1.size();i++){
+                        LogPrintf("%x", vch1[i]);
+                    }
+                    LogPrintf("\nDone");
                     CScriptNum start(stacktop(-1), fRequireMinimal);
 
                     if (start < 0)
@@ -823,6 +837,14 @@ bool EvalScript(std::vector<std::vector<unsigned char> >& stack, const CScript& 
                     valtype vch1 = stacktop(-3);
                     CScriptNum start(stacktop(-2), fRequireMinimal);
                     CScriptNum length(stacktop(-1), fRequireMinimal);
+
+                    LogPrintf("%d size %d %d", vch1.size(), start.getint(), length.getint());
+
+                    for(int i=0;i<vch1.size();i++){
+                        LogPrintf("%x", vch1[i]);
+                    }
+                    LogPrintf("\nDone");
+                    LogPrintf("Stack size: substr %d\n", stack.size());
 
                     if (opcode == OP_SUBSTR_LAZY) {
                         if (start < 0)
@@ -1424,11 +1446,13 @@ bool EvalScript(std::vector<std::vector<unsigned char> >& stack, const CScript& 
                     popstack(stack);
                     popstack(stack);
                     stack.push_back(fSuccess ? vchTrue : vchFalse);
+                    
                     if (opcode == OP_CHECKSIGFROMSTACKVERIFY)
                         popstack(stack);
 
                     if (!fSuccess)
                         return set_error(serror, SCRIPT_ERR_CHECKSIGVERIFY);
+                    LogPrintf("CheckSigfromstack success");
                 }
                 break;
 
@@ -1653,10 +1677,15 @@ uint256 SignatureHash(const CScript& scriptCode, const T& txTo, unsigned int nIn
         CHashWriter ss(SER_GETHASH, 0);
         // Version
         ss << txTo.nVersion;
+        LogPrintf("\n");
+        LogPrintf("Version %l\n", txTo.nVersion);
         // Input prevouts/nSequence (none/all, depending on flags)
         ss << hashPrevouts;
+        LogPrintf("hashPrevouts %s\n", hashPrevouts.ToString());
         ss << hashSequence;
+        LogPrintf("hashSeq %s\n", hashSequence.ToString());
         if (g_con_elementsmode) {
+            LogPrintf("hashIssuance %s\n", hashIssuance.ToString());
             ss << hashIssuance;
         }
         // The input being signed (replacing the scriptSig with scriptCode + amount)
@@ -1664,24 +1693,30 @@ uint256 SignatureHash(const CScript& scriptCode, const T& txTo, unsigned int nIn
         // may already be contain in hashSequence.
         ss << txTo.vin[nIn].prevout;
         ss << scriptCode;
+        // LogPrintf("%s", scriptCode.Serialize())
         if (g_con_elementsmode) {
+            LogPrintf(" should come here %s\n", amount.GetHex());
             ss << amount;
         } else {
+            LogPrintf(" should NEVER come here");
             ss << amount.GetAmount();
         }
         ss << txTo.vin[nIn].nSequence;
         if (!txTo.vin[nIn].assetIssuance.IsNull()) {
+            LogPrintf(" should not came here");
             assert(g_con_elementsmode);
             ss << txTo.vin[nIn].assetIssuance;
         }
         // Outputs (none/one/all, depending on flags)
         ss << hashOutputs;
+        LogPrintf("hashOutputs %s\n", hashOutputs.ToString());
         // Locktime
         ss << txTo.nLockTime;
         // Sighash type
         ss << nHashType;
-
-        return ss.GetHash();
+        uint256 res = ss.GetHash();
+        LogPrintf("Final sighash %s\n", res.ToString());
+        return res;
     }
 
     static const uint256 one(uint256S("0000000000000000000000000000000000000000000000000000000000000001"));

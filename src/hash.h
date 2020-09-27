@@ -13,6 +13,7 @@
 #include <serialize.h>
 #include <uint256.h>
 #include <version.h>
+#include <logging.h>
 
 #include <vector>
 
@@ -129,6 +130,10 @@ public:
     int GetVersion() const { return nVersion; }
 
     void write(const char *pch, size_t size) {
+        // for(int i=0;i<size;i++){
+        //     LogPrintf("%x", pch[i]);
+        // }
+        // LogPrintf("\n");
         ctx.Write((const unsigned char*)pch, size);
     }
 

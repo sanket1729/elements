@@ -1458,6 +1458,7 @@ void InitScriptExecutionCache() {
  */
 bool CheckInputs(const CTransaction& tx, CValidationState &state, const CCoinsViewCache &inputs, bool fScriptChecks, unsigned int flags, bool cacheSigStore, bool cacheFullScriptStore, PrecomputedTransactionData& txdata, std::vector<CCheck*> *pvChecks) EXCLUSIVE_LOCKS_REQUIRED(cs_main)
 {
+    LogPrintf("*** Message here\n");
     if (!tx.IsCoinBase())
     {
         if (pvChecks)
@@ -1522,6 +1523,7 @@ bool CheckInputs(const CTransaction& tx, CValidationState &state, const CCoinsVi
                         CScriptCheck check2(coin.out, tx, i,
                                 flags & ~STANDARD_NOT_MANDATORY_VERIFY_FLAGS, cacheSigStore, &txdata);
                         if (check2()) {
+    LogPrintf("*** Message2 here\n");
                             return state.Invalid(false, REJECT_NONSTANDARD, strprintf("non-mandatory-script-verify-flag (%s)", ScriptErrorString(serror)));
                         }
                     }
