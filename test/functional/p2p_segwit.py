@@ -318,6 +318,7 @@ class SegWitTest(BitcoinTestFramework):
         tx.vout.append(CTxOut(49 * 100000000, CScript([OP_TRUE, OP_DROP] * 15 + [OP_TRUE])))
         tx.vout.append(CTxOut(50*COIN - 49*COIN)) # fee
         tx.calc_sha256()
+        self.log.info(tx.serialize().hex())
 
         # Check that serializing it with or without witness is the same
         # This is a sanity check of our testing framework.

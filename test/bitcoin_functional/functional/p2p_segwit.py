@@ -310,6 +310,7 @@ class SegWitTest(BitcoinTestFramework):
         tx.vin.append(CTxIn(COutPoint(txid, 0), b""))
         tx.vout.append(CTxOut(49 * 100000000, CScript([OP_TRUE, OP_DROP] * 15 + [OP_TRUE])))
         tx.calc_sha256()
+        print(tx)
 
         # Check that serializing it with or without witness is the same
         # This is a sanity check of our testing framework.
@@ -317,6 +318,7 @@ class SegWitTest(BitcoinTestFramework):
 
         self.test_node.send_message(msg_witness_tx(tx))
         self.test_node.sync_with_ping()  # make sure the tx was processed
+        print(self.nodes[0].getrawmempool())
         assert(tx.hash in self.nodes[0].getrawmempool())
         # Save this transaction for later
         self.utxo.append(UTXO(tx.sha256, 0, 49 * 100000000))
