@@ -260,7 +260,7 @@ class ExampleTest(BitcoinTestFramework):
                 script = get_p2pkh_script(pubkeyhash)
                 self.log.info(script.hex())
                 self.log.info(v.vchCommitment.hex())
-                tx_hash = SegwitVersion1SignatureHash(script, tx, 0, sighash, v)
+                tx_hash = SegwitVersion1SignatureHash(script, tx_issue, 0, sighash, v)
                 self.log.info(tx_hash.hex())
         
         self.log.info("Wait for node1 to reach current tip (height 11) using RPC")
