@@ -252,16 +252,32 @@ class ExampleTest(BitcoinTestFramework):
         values = [val_conf, val_exp]
 
         sighashes = [SIGHASH_ALL, SIGHASH_NONE, SIGHASH_SINGLE, SIGHASH_ALL | SIGHASH_ANYONECANPAY, SIGHASH_NONE | SIGHASH_ANYONECANPAY, SIGHASH_SINGLE| SIGHASH_ANYONECANPAY]
+        # # Test 1: P2WPKH
+        # # First create a P2WPKH output that uses an uncompressed pubkey
+        # for v in values:
+        #     for sighash in sighashes:
+        #         pubkeyhash = hash160(pubkey)
+        #         script = get_p2pkh_script(pubkeyhash)
+        #         self.log.info(script.hex())
+        #         self.log.info(v.vchCommitment.hex())
+        #         tx_hash = SegwitVersion1SignatureHash(script, tx_issue, 0, sighash, v)
+        #         self.log.info(tx_hash.hex())
+
         # Test 1: P2WPKH
         # First create a P2WPKH output that uses an uncompressed pubkey
-        for v in values:
-            for sighash in sighashes:
-                pubkeyhash = hash160(pubkey)
-                script = get_p2pkh_script(pubkeyhash)
-                self.log.info(script.hex())
-                self.log.info(v.vchCommitment.hex())
-                tx_hash = SegwitVersion1SignatureHash(script, tx_issue, 0, sighash, v)
-                self.log.info(tx_hash.hex())
+        # for sighash in sighashes:
+        #     pubkeyhash = hash160(pubkey)
+        #     script = get_p2pkh_script(pubkeyhash)
+        #     self.log.info(script.hex())
+        #     tx_hash = SignatureHash(script, tx, 0, sighash)
+        #     self.log.info(tx_hash[0].hex())
+        
+        for sighash in sighashes:
+            pubkeyhash = hash160(pubkey)
+            script = get_p2pkh_script(pubkeyhash)
+            self.log.info(script.hex())
+            tx_hash = SignatureHash(script, tx_issue, 0, sighash)
+            self.log.info(tx_hash[0].hex())
         
         self.log.info("Wait for node1 to reach current tip (height 11) using RPC")
         self.nodes[1].waitforblockheight(11)

@@ -666,7 +666,7 @@ def SignatureHash(script, txTo, inIdx, hashtype):
 
     # add sighash type
     s += struct.pack(b"<I", hashtype)
-
+    print("here" ,s.hex())
     hash = hash256(s)
 
     return (hash, None)
