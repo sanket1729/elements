@@ -1,14 +1,18 @@
 # Copyright (C) 2019 The python-elementstx developers
 # Copyright (C) 2018 The python-bitcointx developers
 #
-# This file is part of python-elementstx.
+# This file is from python-elementstx.
 #
-# It is subject to the license terms in the LICENSE file found in the top-level
-# directory of this distribution.
+# This file was originally under the GNU LESSER GENERAL PUBLIC LICENSE
+# from python-bitcointx.(https://github.com/Simplexum/python-bitcointx/blob/master/LICENSE)
+# and was later allowed by the permission of the authors to be relicensed
+# for the elements project under the MIT LICENSE.
+# Author: Dmitry Petukhov <dp@simplexum.com>
 #
-# No part of python-elementstx, including this file, may be copied, modified,
-# propagated, or distributed except according to the terms contained in the
-# LICENSE file.
+# Copyright (c) 2014-2018 The Bitcoin Core developers
+# Distributed under the MIT software license, see the accompanying
+# file COPYING or http://www.opensource.org/licenses/mit-license.php.
+#
 
 # pylama:ignore=E501
 
