@@ -151,6 +151,11 @@ std::string GetOpName(opcodetype opcode)
     case OP_SHA256INITIALIZE       : return "OP_SHA256INITIALIZE";
     case OP_SHA256UPDATE           : return "OP_SHA256UPDATE";
     case OP_SHA256FINALIZE         : return "OP_SHA256FINALIZE";
+    case OP_INSPECTINPUT           : return "OP_INSPECTINPUT";
+    case OP_INSPECTCURRENTINPUT    : return "OP_INSPECTCURRENTINPUT";
+    case OP_INSPECTOUTPUT          : return "OP_INSPECTOUTPUT";
+    case OP_INSPECTTX              : return "OP_INSPECTTX";
+
     case OP_INVALIDOPCODE          : return "OP_INVALIDOPCODE";
 
     default:

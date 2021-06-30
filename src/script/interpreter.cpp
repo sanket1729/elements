@@ -2385,6 +2385,42 @@ bool GenericTransactionSignatureChecker<T>::CheckSequence(const CScriptNum& nSeq
     return true;
 }
 
+template <class T>
+const std::vector<CTxIn>* GenericTransactionSignatureChecker<T>::GetTxvIn() const
+{
+    return &txTo->vin;
+}
+
+template <class T>
+const std::vector<CTxOut>* GenericTransactionSignatureChecker<T>::GetTxvOut() const
+{
+    return &txTo->vout;
+}
+
+template <class T>
+unsigned int GenericTransactionSignatureChecker<T>::GetLockTime() const
+{
+    return txTo->nLockTime;
+}
+
+template <class T>
+unsigned int GenericTransactionSignatureChecker<T>::GetTxVersion() const
+{
+    return txTo->nVersion;
+}
+
+template <class T>
+const PrecomputedTransactionData* GenericTransactionSignatureChecker<T>::GetPrecomputedTransactionData() const
+{
+    return txdata;
+}
+
+template <class T>
+unsigned int GenericTransactionSignatureChecker<T>::GetnIn() const
+{
+    return nIn;
+}
+
 // explicit instantiation
 template class GenericTransactionSignatureChecker<CTransaction>;
 template class GenericTransactionSignatureChecker<CMutableTransaction>;

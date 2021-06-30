@@ -218,6 +218,12 @@ enum opcodetype
     OP_SHA256UPDATE = 0xc5,
     OP_SHA256FINALIZE = 0xc6,
 
+    // Introspection opcodes
+    OP_INSPECTINPUT = 0xc7,
+    OP_INSPECTCURRENTINPUT = 0xc8,
+    OP_INSPECTOUTPUT = 0xc9,
+    OP_INSPECTTX = 0xca,
+
     OP_INVALIDOPCODE = 0xff,
 };
 
