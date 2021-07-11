@@ -60,6 +60,38 @@ static inline void popstack(std::vector<valtype>& stack)
     stack.pop_back();
 }
 
+static inline void pushasset(std::vector<valtype>& stack, const CConfidentialAsset& asset)
+{
+    valtype vchinpAsset;
+    vchinpAsset.insert(vchinpAsset.begin(), asset.vchCommitment.begin() + 1, asset.vchCommitment.begin() + 33);
+    valtype vchAssetPref;
+    vchAssetPref.insert(vchAssetPref.begin(), asset.vchCommitment.begin(), asset.vchCommitment.begin() + 1);
+    stack.push_back(vchinpAsset);
+    stack.push_back(vchAssetPref);
+}
+
+// Review: Not sure if this should inline or not? Leave it to the compiler??
+static void pushvalue(std::vector<valtype>& stack, const CConfidentialValue& value)
+{
+    valtype vchinpValue;
+    if (value.IsExplicit()) {
+        // int64_t amt = value.GetAmount();
+        // Convert BE to LE by using reverse iterator
+        vchinpValue.insert(vchinpValue.begin(), value.vchCommitment.rbegin(), value.vchCommitment.rbegin() + 8);
+    } else if (value.IsCommitment()) {
+        vchinpValue.insert(vchinpValue.begin(), value.vchCommitment.begin() + 1, value.vchCommitment.begin() + 33);
+    } // nothing to insert is value is Null
+    valtype vchValuePref;
+    if (!value.IsNull()) {
+        vchValuePref.insert(vchValuePref.begin(), value.vchCommitment.begin(), value.vchCommitment.begin() + 1);
+        stack.push_back(vchinpValue); // if value is null, dont' push value
+        stack.push_back(vchValuePref); // always push prefix
+    } else {
+        // If value is null, push the empty vector onto the stack
+        stack.push_back(valtype(0));
+    }
+}
+
 bool static IsCompressedOrUncompressedPubKey(const valtype &vchPubKey) {
     if (vchPubKey.size() < CPubKey::COMPRESSED_SIZE) {
         //  Non-canonical public key: too short
@@ -1677,6 +1709,100 @@ bool EvalScript(std::vector<std::vector<unsigned char> >& stack, const CScript& 
                     popstack(stack);
                     popstack(stack);
                     stack.push_back(vchHash);
+                }
+                break;
+
+                case OP_INSPECTINPUT:
+                {
+                    // OP_INSPECTINPUT is available post tapscript
+                    if (sigversion == SigVersion::BASE || sigversion == SigVersion::WITNESS_V0) return set_error(serror, SCRIPT_ERR_BAD_OPCODE);
+
+                    if (stack.size() < 2)
+                        return set_error(serror, SCRIPT_ERR_INVALID_STACK_OPERATION);
+
+                    int n = CScriptNum(stacktop(-1), fRequireMinimal).getint();
+                    int idx = CScriptNum(stacktop(-2), fRequireMinimal).getint();
+                    popstack(stack);
+                    popstack(stack);
+
+                    auto inps = checker.GetTxvIn();
+                    auto spent_outputs = checker.GetPrecomputedTransactionData()->m_spent_outputs;
+                    if (idx < 0 || (unsigned int)idx >= inps->size() || (unsigned int)idx >= spent_outputs.size())
+                        return set_error(serror, SCRIPT_ERR_INTROSPECT_INDEX_OUT_OF_BOUNDS);
+                    const CTxIn inp = inps->at(idx);
+                    const CTxOut spent_utxo = spent_outputs[idx];
+
+                    switch (n)
+                    {
+                        case 0:
+                        {
+                            valtype vchOutpointFlag(1);
+                            vchOutpointFlag[0] = (unsigned char) ((!inp.assetIssuance.IsNull() << 7) + (inp.m_is_pegin << 6));
+                            stack.push_back(vchOutpointFlag);
+                            break;
+                        }
+                        case 1:
+                        {
+                            valtype vchPrevTxid;
+                            vchPrevTxid.insert(vchPrevTxid.begin(), inp.prevout.hash.begin(), inp.prevout.hash.begin() + 32);
+                            valtype vchPrevVout;
+                            auto vout_le = htole32(inp.prevout.n);
+                            vchPrevVout.insert(vchPrevVout.begin(), (unsigned char*)&vout_le, (unsigned char*)&vout_le + 4);
+                            stack.push_back(vchPrevTxid);
+                            stack.push_back(vchPrevVout);
+                            break;
+                        }
+                        case 2:
+                        {
+                            pushasset(stack, spent_utxo.nAsset);
+                            break;
+                        }
+                        case 3:
+                        {
+                            pushvalue(stack, spent_utxo.nValue);
+                            break;
+                        }
+                        case 4:
+                        {
+                            valtype vchScriptPubKey;
+                            vchScriptPubKey.insert(vchScriptPubKey.begin(), spent_utxo.scriptPubKey.begin(), spent_utxo.scriptPubKey.end());
+                            stack.push_back(vchScriptPubKey);
+                            break;
+                        }
+                        case 5:
+                        {
+                            valtype vchnSequence;
+                            auto nsequence_le = htole32(inp.nSequence);
+                            vchnSequence.insert(vchnSequence.begin(), (unsigned char*)&nsequence_le, (unsigned char*)&nsequence_le + 4);
+                            stack.push_back(vchnSequence);
+                            break;
+                        }
+                        case 6:
+                        {
+                            if (!inp.assetIssuance.IsNull()) {
+                                valtype vchAssetBlindingNonce, vchAssetEntropy;
+                                pushvalue(stack, inp.assetIssuance.nInflationKeys);
+                                pushvalue(stack, inp.assetIssuance.nAmount);
+                                // Next push Asset entropy
+                                vchAssetEntropy.insert(vchAssetEntropy.begin(), inp.assetIssuance.assetEntropy.begin(), inp.assetIssuance.assetEntropy.end());
+                                stack.push_back(vchAssetEntropy);
+                                // Finally push blinding nonce
+                                // By pushing the this order, we make sure that the stack top is empty
+                                // iff there is no issuance. Note that nInflationKeys can be null and can push false
+                                vchAssetBlindingNonce.insert(vchAssetBlindingNonce.begin(), inp.assetIssuance.assetBlindingNonce.begin(), inp.assetIssuance.assetBlindingNonce.end());
+                                stack.push_back(vchAssetBlindingNonce);
+                            } else { // No issuance
+                                stack.push_back(vchFalse);
+                            }
+                            break;
+                        }
+                        default:
+                            // Error on other values. This could be turned into OP_SUCCESS, but enforcing it
+                            // via SCRIPT_VERIFY_DISCOURAGE_OP_SUCCESS is not possible.
+                            // Alternatively, this can be turned into a OP_NOP, but restricts the use of this
+                            // opcode to read-only type.
+                            return set_error(serror, SCRIPT_ERR_INTROSPECT_INDEX_OUT_OF_BOUNDS);
+                    }
                 }
                 break;
 
