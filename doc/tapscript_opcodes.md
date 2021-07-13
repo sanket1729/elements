@@ -39,7 +39,7 @@ For opcodes that inspect data that is not committed in sighash, introspection is
          - Push `nAmount` as a tuple, value(8, 32) followed by a push for prefix(1). This cannot be null
          - Push 32 byte `assetEntropy`
          - Push 32 byte `assetBlindingNonce`
-      9. Else abort the script.
+      9. Else, Immediately return true without executing the rest of the script.
    - Define `OP_SUCCESS200` as `OP_INSPECTCURRENTINPUT` that pushes the current input index as `CScriptNum`. This can be used in conjunction with `OP_INSPECTINPUT` for inspecting current input
    - Define `OP_SUCCESS201` as `OP_INSPECTOUTPUT` with the following semantics:
       - Pop the stack pop as minimal `CScriptNum` as `n`. Next, pop another element as minimal `CScriptNum` output index `idx`.
@@ -47,7 +47,7 @@ For opcodes that inspect data that is not committed in sighash, introspection is
       2. If `n=1`, Push the `nValue` as a tuple, value(8, 32) followed by prefix
       3. If `n=2`, Push the `nNonce`(33) onto the stack. If the nonce is null, push an empty vector onto the stack.
       4. If `n=3`, Push the scriptPubkey(34) onto the stack. Note that the compact size prefix is not pushed onto the stack.
-      5. Else, abort the script.
+      5. Else, Immediately return true without executing the rest of the script.
    - Define `OP_SUCCESS202` as `OP_INSPECTTX` with the following semantics:
       - Pop the stack pop as minimal `CScriptNum` as `n`.
       1. If `n=0`, Push the nVersion(4) as little-endian.
@@ -55,7 +55,7 @@ For opcodes that inspect data that is not committed in sighash, introspection is
       3. If `n=2`, Push the number of inputs(4) as little-endian
       4. If `n=3`, Push the number of outputs(4) as little-endian
       5. If `n=4`, Push the transaction size in vbytes (4) as little-endian
-      6. Otherwise treat as `OP_SUCCESS` and return true (without executing rest of script).
+      6. Else, Immediately return true without executing the rest of the script.
 
 5. **Crypto**: In order to allow more complex operations on elements, we introduce the following new crypto-operators.
    - Define `OP_SUCCESS203` as `OP_ECMULSCALAREXPVERIFY`, pop the top element as `k`. Then pop next elements as points `G1`(first), `G2`(second)
